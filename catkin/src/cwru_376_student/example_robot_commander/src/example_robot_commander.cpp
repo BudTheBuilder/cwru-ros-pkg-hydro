@@ -52,13 +52,63 @@ for (int i=0;i<niters;i++) {
     cmd_publisher.publish(twist_cmd); // really, should only need to publish this once, but no hard done
     sleep_timer.sleep(); // sleep for (remainder of) 10m
 }
-ROS_INFO("my work here is done");
-//while (ros::ok()) 
-{
 twist_cmd.linear.x = 0.0;
 twist_cmd.angular.z = 0;
 cmd_publisher.publish(twist_cmd); // and halt
+//}
+
+//Now move forward for 15.5 seconds at 0.8 m/s to get down to the hall
+twist_cmd.linear.x = 0.8;
+niters = 1550;
+for (int i = 0; i < niters; i++) {
+    cmd_publisher.publish(twist_cmd); // really, should only need to publish this once, but no hard done
+    sleep_timer.sleep();
 }
+
+//Now turn right by 90 degrees; same as the code above that was turned the robot at the first intersection
+
+twist_cmd.linear.x = 0.0;
+twist_cmd.angular.z = -0.314;
+niters=500; // 5 sec
+ROS_INFO("Time to rotate negative (again)!");
+for (int i=0;i<niters;i++) {
+    cmd_publisher.publish(twist_cmd); // really, should only need to publish this once, but no hard done
+    sleep_timer.sleep(); // sleep for (remainder of) 10m
+}
+
+
+//Now move forward again to get to the vending machines
+twist_cmd.angular.z = 0.0;
+twist_cmd.linear.x = 0.4;
+niters = 2200;
+for (int i = 0; i < niters; i++) {
+    cmd_publisher.publish(twist_cmd); // really, should only need to publish this once, but no hard done
+    sleep_timer.sleep();
+}
+
+//Now rotate right again to face the vending machines
+twist_cmd.linear.x = 0.0;
+twist_cmd.angular.z = -0.314;
+niters=500; // 5 sec
+ROS_INFO("Time to rotate negative (again)!");
+for (int i=0;i<niters;i++) {
+    cmd_publisher.publish(twist_cmd); // really, should only need to publish this once, but no hard done
+    sleep_timer.sleep(); // sleep for (remainder of) 10m
+}
+
+//Finally, move forward a bit, to get close to the vending machines
+twist_cmd.angular.z = 0.0;
+twist_cmd.linear.x = 0.4;
+niters = 200;
+for (int i = 0; i < niters; i++) {
+    cmd_publisher.publish(twist_cmd); // really, should only need to publish this once, but no hard done
+    sleep_timer.sleep();
+}
+
+ROS_INFO("Our work here is done!");
+twist_cmd.linear.x = 0.0;
+twist_cmd.angular.z = 0;
+cmd_publisher.publish(twist_cmd); // and halt
 
 
 return 0;
