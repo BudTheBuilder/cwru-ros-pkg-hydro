@@ -56,6 +56,10 @@ ros::Time t_last_callback_;
 double dt_callback_=0.0;
 
 int segments_done = 0;
+double segment_length_done = 0.0; // need to compute actual distance travelled within the current segment
+double start_x = 0.0;
+double start_y = 0.0;
+double start_phi = 0.0;
 //double rotate_angle = -1.5;
 
 // receive odom messages and strip off the components we want to use
@@ -172,14 +176,21 @@ void rotateRampFunction(double rotate_angle, double start_phi, ros::Publisher ve
 		
 		if(radians_to_go <= 0) 
 		{
+
 			cmd_vel.angular.z = 0.0;
 			segments_done++;
-			ROS_INFO("AND we're done!");
+			segment_length_done = 0.0;
+			//When we are finished with this segment, set the initial parameters to the current odom measurements
+			start_x = odom_x_;
+			start_y = odom_y_;
+			start_phi = odom_phi_;
 		}
 	
 
 }
 
+
+//The following is the function that is called to move the robot forward, and whose velocity follows the trapezoidal velocity profile
 void moveForwardFunction(double segment_length, double segment_length_done, double start_x, double start_y, double scheduled_vel, double new_cmd_vel, double new_cmd_omega, ros::Publisher vel_cmd_publisher, geometry_msgs::Twist cmd_vel, ros::Rate rtimer)
 {
 	double T_accel = v_max / a_max; //...assumes start from rest
@@ -240,6 +251,11 @@ void moveForwardFunction(double segment_length, double segment_length_done, doub
 		if (dist_to_go <= 0.0) { //uh-oh...went too far already!
 		    cmd_vel.linear.x = 0.0;  //command vel=0
 			segments_done++;
+			segment_length_done = 0.0;
+			//When we are finished with this segment, set the initial parameters to the current odom measurements
+			start_x = odom_x_;
+			start_y = odom_y_;
+			start_phi = odom_phi_;
 		}
 }
 
@@ -258,11 +274,11 @@ int main(int argc, char **argv) {
     
     //here's a subtlety:  might be tempted to measure distance to the goal, instead of distance from the start.
     // HOWEVER, will NEVER satisfy distance to goal = 0 precisely, but WILL eventually move far enought to satisfy distance travelled condition
-    double segment_length_done = 0.0; // need to compute actual distance travelled within the current segment
-    double start_x = 0.0; // fill these in with actual values once odom message is received
-    double start_y = 0.0; // subsequent segment start coordinates should be specified relative to end of previous segment
+    segment_length_done = 0.0; // need to compute actual distance travelled within the current segment
+    start_x = 0.0; // fill these in with actual values once odom message is received
+    start_y = 0.0; // subsequent segment start coordinates should be specified relative to end of previous segment
     
-    double start_phi = 0.0;
+    start_phi = 0.0;
 
     double scheduled_vel = 0.0; //desired vel, assuming all is per plan
     double new_cmd_vel = 0.1; // value of speed to be commanded; update each iteration
@@ -317,25 +333,27 @@ int main(int argc, char **argv) {
     {
         ros::spinOnce(); // allow callbacks to populate fresh data
 
-	
+	//Beginning of the function calls for each segment (0 - 4)
 	if (segments_done == 0) 
 	{
-		moveForwardFunction(5.0, segment_length_done, start_x, start_y, scheduled_vel, new_cmd_vel, new_cmd_omega, vel_cmd_publisher, cmd_vel, rtimer);
+		moveForwardFunction(4.5, segment_length_done, start_x, start_y, scheduled_vel, new_cmd_vel, new_cmd_omega, vel_cmd_publisher, cmd_vel, rtimer);
 		
 	}
 	       
-	//vel_cmd_publisher.publish(cmd_vel); // publish the command to robot0/cmd_vel
-	//rtimer.sleep(); // sleep for remainder of timed iteration
-	
-	//After the first segment, we rotate:
 	if (segments_done == 1)
 	{
-		rotateRampFunction(-1.5, start_phi, vel_cmd_publisher, cmd_vel, rtimer);
+		rotateRampFunction(-1.5079, start_phi, vel_cmd_publisher, cmd_vel, rtimer);
 	}
 	if (segments_done == 2) {
-        
-		moveForwardFunction(5.0, segment_length_done, start_x, start_y, scheduled_vel, new_cmd_vel, new_cmd_omega, vel_cmd_publisher, cmd_vel, rtimer);
+		moveForwardFunction(12.1, segment_length_done, start_x, start_y, scheduled_vel, new_cmd_vel, new_cmd_omega, vel_cmd_publisher, cmd_vel, rtimer);
 	}
+	if (segments_done == 3) {
+		rotateRampFunction(-1.508, start_phi, vel_cmd_publisher, cmd_vel, rtimer);
+	}
+	if (segments_done == 4) {
+		moveForwardFunction(8.5, segment_length_done, start_x, start_y, scheduled_vel, new_cmd_vel, new_cmd_omega, vel_cmd_publisher, cmd_vel, rtimer);
+	}
+
 
 
 
