@@ -28,6 +28,8 @@ void laserCallback(const sensor_msgs::LaserScan& laser_scan) {
         //for first message received, set up the desired index of LIDAR range to eval
         angle_min_ = laser_scan.angle_min;
         angle_max_ = laser_scan.angle_max;
+        ROS_INFO("angle min is: %f", angle_min_);
+        ROS_INFO("angle max is : %f", angle_max_);
         angle_increment_ = laser_scan.angle_increment;
         range_min_ = laser_scan.range_min;
         range_max_ = laser_scan.range_max;
